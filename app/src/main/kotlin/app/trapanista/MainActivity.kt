@@ -1,5 +1,6 @@
 package app.trapanista
 
+import android.media.AudioManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -32,6 +33,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         val settings = SettingsStore(applicationContext)
         val firebaseReady = (application as TrapanistaApp).firebaseReady
+        val audioManager = applicationContext.getSystemService(AudioManager::class.java)
         setContent {
             TrapanistaTheme {
                 // HOME, SETTINGS, "chat:<scenario id>" or "voice:<scenario id>".
@@ -52,7 +54,7 @@ class MainActivity : ComponentActivity() {
                     }
                     screen.startsWith(VOICE) -> {
                         val scenario = scenarios.first { it.id == screen.removePrefix(VOICE) }
-                        val vm = viewModel(key = screen) { VoiceViewModel(scenario, settings, firebaseReady) }
+                        val vm = viewModel(key = screen) { VoiceViewModel(scenario, settings, firebaseReady, audioManager) }
                         VoiceScreen(scenario, vm, onBack = { screen = HOME })
                     }
                 }

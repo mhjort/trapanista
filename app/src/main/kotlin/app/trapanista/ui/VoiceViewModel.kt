@@ -1,6 +1,7 @@
 package app.trapanista.ui
 
 import android.Manifest
+import android.media.AudioManager
 import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
@@ -37,6 +38,7 @@ class VoiceViewModel(
     private val scenario: Scenario,
     private val settings: SettingsStore,
     private val firebaseReady: Boolean,
+    private val audioManager: AudioManager,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(VoiceUiState())
@@ -54,6 +56,7 @@ class VoiceViewModel(
             model = settings.geminiModel,
             scenario = scenario,
             level = settings.level,
+            audioManager = audioManager,
             onTranscript = ::appendTranscript,
             onSceneComplete = { _state.update { it.copy(sceneComplete = true) } },
             onDisconnected = { viewModelScope.launch { finish() } },
@@ -66,6 +69,7 @@ class VoiceViewModel(
                 _state.update { it.copy(phase = VoicePhase.LIVE) }
             } catch (e: Exception) {
                 Log.w("VoiceViewModel", "Couldn't start Gemini Live", e)
+                runCatching { voice.stop() }
                 partner = null
                 _state.update { it.copy(phase = VoicePhase.IDLE, error = "Couldn't start the conversation: ${e.message}") }
             }
