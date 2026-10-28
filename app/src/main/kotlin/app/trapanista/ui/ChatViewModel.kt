@@ -7,7 +7,7 @@ import app.trapanista.data.SettingsStore
 import app.trapanista.llm.Correction
 import app.trapanista.llm.Suggestion
 import app.trapanista.llm.TutorClient
-import app.trapanista.llm.TutorException
+import app.trapanista.llm.ClaudeException
 import app.trapanista.llm.TutorTurn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -76,7 +76,7 @@ class ChatViewModel(
                 val turn = withContext(Dispatchers.IO) { call(client) }
                 retry = null
                 _state.update { it.withTurn(turn) }
-            } catch (e: TutorException) {
+            } catch (e: ClaudeException) {
                 _state.update { it.copy(loading = false, error = e.message) }
             }
         }

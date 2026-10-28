@@ -18,31 +18,42 @@ import app.trapanista.ui.ChatViewModel
 import app.trapanista.ui.HomeScreen
 import app.trapanista.ui.SettingsScreen
 import app.trapanista.ui.TrapanistaTheme
+import app.trapanista.ui.VoiceScreen
+import app.trapanista.ui.VoiceViewModel
 
 private const val HOME = "home"
 private const val SETTINGS = "settings"
+private const val CHAT = "chat:"
+private const val VOICE = "voice:"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val settings = SettingsStore(applicationContext)
+        val firebaseReady = (application as TrapanistaApp).firebaseReady
         setContent {
             TrapanistaTheme {
-                // HOME, SETTINGS, or a scenario id.
+                // HOME, SETTINGS, "chat:<scenario id>" or "voice:<scenario id>".
                 var screen by rememberSaveable { mutableStateOf(HOME) }
                 BackHandler(enabled = screen != HOME) { screen = HOME }
-                when (screen) {
-                    HOME -> HomeScreen(
+                when {
+                    screen == HOME -> HomeScreen(
                         hasApiKey = remember(screen) { settings.apiKey != null },
-                        onOpenScenario = { screen = it.id },
+                        onSpeak = { screen = VOICE + it.id },
+                        onType = { screen = CHAT + it.id },
                         onOpenSettings = { screen = SETTINGS },
                     )
-                    SETTINGS -> SettingsScreen(settings, onBack = { screen = HOME })
-                    else -> {
-                        val scenario = scenarios.first { it.id == screen }
-                        val vm = viewModel(key = scenario.id) { ChatViewModel(scenario, settings) }
+                    screen == SETTINGS -> SettingsScreen(settings, onBack = { screen = HOME })
+                    screen.startsWith(CHAT) -> {
+                        val scenario = scenarios.first { it.id == screen.removePrefix(CHAT) }
+                        val vm = viewModel(key = screen) { ChatViewModel(scenario, settings) }
                         ChatScreen(scenario, vm, onBack = { screen = HOME })
+                    }
+                    screen.startsWith(VOICE) -> {
+                        val scenario = scenarios.first { it.id == screen.removePrefix(VOICE) }
+                        val vm = viewModel(key = screen) { VoiceViewModel(scenario, settings, firebaseReady) }
+                        VoiceScreen(scenario, vm, onBack = { screen = HOME })
                     }
                 }
             }

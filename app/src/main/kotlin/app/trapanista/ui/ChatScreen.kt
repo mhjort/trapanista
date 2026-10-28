@@ -226,13 +226,16 @@ private fun LearnerBubble(item: ChatItem.Learner) {
         ) {
             Text(item.text, Modifier.padding(12.dp), style = MaterialTheme.typography.bodyLarge)
         }
-        item.corrections.forEach { CorrectionRow(it) }
+        item.corrections.forEach { CorrectionRow(it, alignEnd = true) }
     }
 }
 
 @Composable
-private fun CorrectionRow(c: Correction) {
-    Column(Modifier.widthIn(max = 320.dp).padding(top = 4.dp, end = 8.dp), horizontalAlignment = Alignment.End) {
+internal fun CorrectionRow(c: Correction, alignEnd: Boolean) {
+    Column(
+        Modifier.widthIn(max = 320.dp).padding(top = 4.dp, end = 8.dp),
+        horizontalAlignment = if (alignEnd) Alignment.End else Alignment.Start,
+    ) {
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 c.original,

@@ -4,6 +4,12 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Voice mode needs a Firebase project. Without google-services.json the app still
+// builds and text mode works; voice mode shows a setup message instead.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "app.trapanista"
     compileSdk = 35
@@ -55,6 +61,11 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.anthropic.java)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.ai)
+    debugImplementation(libs.firebase.appcheck.debug)
+    releaseImplementation(libs.firebase.appcheck.playintegrity)
     debugImplementation(libs.androidx.ui.tooling)
 }

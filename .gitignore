@@ -8,3 +8,6 @@ build/
 .externalNativeBuild
 .cxx
 .kotlin/
+
+# Firebase config for the maintainer's project; each developer adds their own.
+app/google-services.json

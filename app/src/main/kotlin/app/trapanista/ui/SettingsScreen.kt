@@ -31,7 +31,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import app.trapanista.data.Level
 import app.trapanista.data.SettingsStore
-import app.trapanista.data.TutorModel
+import app.trapanista.data.ClaudeModel
+import app.trapanista.data.GeminiModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -41,6 +42,7 @@ fun SettingsScreen(settings: SettingsStore, onBack: () -> Unit) {
     var hasKey by remember { mutableStateOf(savedKey != null) }
     var level by remember { mutableStateOf(settings.level) }
     var model by remember { mutableStateOf(settings.model) }
+    var geminiModel by remember { mutableStateOf(settings.geminiModel) }
 
     Scaffold(
         topBar = {
@@ -93,9 +95,9 @@ fun SettingsScreen(settings: SettingsStore, onBack: () -> Unit) {
                 }
             }
 
-            Text("Model", style = MaterialTheme.typography.titleMedium)
+            Text("Claude model (text practice and feedback)", style = MaterialTheme.typography.titleMedium)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TutorModel.entries.forEach { m ->
+                ClaudeModel.entries.forEach { m ->
                     FilterChip(
                         selected = model == m,
                         onClick = { model = m; settings.model = m },
@@ -105,6 +107,21 @@ fun SettingsScreen(settings: SettingsStore, onBack: () -> Unit) {
             }
             Text(
                 "Opus gives the best feedback; Haiku is the cheapest and fastest.",
+                style = MaterialTheme.typography.bodySmall,
+            )
+
+            Text("Voice model", style = MaterialTheme.typography.titleMedium)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                GeminiModel.entries.forEach { m ->
+                    FilterChip(
+                        selected = geminiModel == m,
+                        onClick = { geminiModel = m; settings.geminiModel = m },
+                        label = { Text(m.label) },
+                    )
+                }
+            }
+            Text(
+                "Spoken conversations use Gemini Live through the app's Firebase project, so no key is needed.",
                 style = MaterialTheme.typography.bodySmall,
             )
         }

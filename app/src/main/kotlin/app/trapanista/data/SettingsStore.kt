@@ -17,10 +17,16 @@ enum class Level(val label: String, val description: String) {
     B2("B2", "Upper intermediate"),
 }
 
-enum class TutorModel(val id: String, val label: String, val supportsFallbacks: Boolean) {
+enum class ClaudeModel(val id: String, val label: String, val supportsFallbacks: Boolean) {
     OPUS("claude-opus-5-5", "Claude Opus 5.5", true),
     SONNET("claude-sonnet-5-5", "Claude Sonnet 5.5", true),
     HAIKU("claude-haiku-5-5", "Claude Haiku 5.5", false),
+}
+
+/** Gemini Live models for voice mode, reached through Firebase AI Logic. */
+enum class GeminiModel(val id: String, val label: String) {
+    LIVE_3_8("gemini-3.8-live", "Gemini 3.8 Live"),
+    FLASH_LIVE_3_1("gemini-3.1-flash-live-preview", "Gemini 3.1 Flash Live (preview)"),
 }
 
 /**
@@ -42,10 +48,15 @@ class SettingsStore(context: Context) {
         get() = prefs.getString(KEY_LEVEL, null)?.let { runCatching { Level.valueOf(it) }.getOrNull() } ?: Level.A2
         set(value) = prefs.edit().putString(KEY_LEVEL, value.name).apply()
 
-    var model: TutorModel
-        get() = prefs.getString(KEY_MODEL, null)?.let { runCatching { TutorModel.valueOf(it) }.getOrNull() }
-            ?: TutorModel.OPUS
+    var model: ClaudeModel
+        get() = prefs.getString(KEY_MODEL, null)?.let { runCatching { ClaudeModel.valueOf(it) }.getOrNull() }
+            ?: ClaudeModel.OPUS
         set(value) = prefs.edit().putString(KEY_MODEL, value.name).apply()
+
+    var geminiModel: GeminiModel
+        get() = prefs.getString(KEY_GEMINI_MODEL, null)?.let { runCatching { GeminiModel.valueOf(it) }.getOrNull() }
+            ?: GeminiModel.LIVE_3_8
+        set(value) = prefs.edit().putString(KEY_GEMINI_MODEL, value.name).apply()
 
     private fun secretKey(): SecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
@@ -81,5 +92,6 @@ class SettingsStore(context: Context) {
         const val KEY_API_KEY = "api_key"
         const val KEY_LEVEL = "level"
         const val KEY_MODEL = "model"
+        const val KEY_GEMINI_MODEL = "gemini_model"
     }
 }

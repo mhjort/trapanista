@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Keyboard
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,7 +36,8 @@ import app.trapanista.data.scenarios
 @Composable
 fun HomeScreen(
     hasApiKey: Boolean,
-    onOpenScenario: (Scenario) -> Unit,
+    onSpeak: (Scenario) -> Unit,
+    onType: (Scenario) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
     Scaffold(
@@ -57,7 +60,7 @@ fun HomeScreen(
                         Column(Modifier.padding(16.dp)) {
                             Text("Benvenuto!", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "Trapanista uses your own Anthropic API key. Add one in Settings to start practising.",
+                                "Trapanista uses your own Anthropic API key for text practice and for feedback on spoken conversations. Add one in Settings.",
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                             TextButton(onClick = onOpenSettings) { Text("Open settings") }
@@ -77,7 +80,7 @@ fun HomeScreen(
                     Modifier
                         .fillMaxWidth()
                         .padding(vertical = 6.dp)
-                        .clickable { onOpenScenario(scenario) },
+                        .clickable { onSpeak(scenario) },
                 ) {
                     Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(scenario.emoji, fontSize = 32.sp)
@@ -87,6 +90,18 @@ fun HomeScreen(
                             Text(scenario.title, style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.primary)
                             Text(scenario.description, style = MaterialTheme.typography.bodySmall)
+                            Row {
+                                TextButton(onClick = { onSpeak(scenario) }) {
+                                    Icon(Icons.Default.Mic, null)
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("Speak")
+                                }
+                                TextButton(onClick = { onType(scenario) }) {
+                                    Icon(Icons.Default.Keyboard, null)
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("Type")
+                                }
+                            }
                         }
                     }
                 }
