@@ -20,8 +20,8 @@ reviews the transcript: what went well, corrections for each line you said, and 
 - **Claude (bring your own key):** text chat and voice feedback call the Anthropic API directly
   with the user's own key. Get one at [console.anthropic.com](https://console.anthropic.com) and
   paste it in **Settings**. It is encrypted with an Android Keystore key and only sent to Anthropic.
-  Settings also has the level (A1-B2) and the Claude model (Opus 5.5 by default; Sonnet 5.5 and
-  Haiku 5.5 cost less).
+  Settings also has the level (A1-B2) and the Claude model (Sonnet 5.5 by default; Opus 5.5 gives the
+  best feedback, Haiku 5.5 costs least).
 - **Gemini Live (Firebase AI Logic):** voice uses the app's Firebase project, so users need no
   Google key, and the project owner pays for voice usage. Settings has the voice model:
   `gemini-3.8-live` by default, or `gemini-3.1-flash-live-preview`.

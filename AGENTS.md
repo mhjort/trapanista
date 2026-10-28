@@ -57,7 +57,7 @@ builds, and voice mode shows a setup message.
 
 ## Claude API conventions
 
-- Default model is `claude-opus-5-5`; Sonnet 5.5 and Haiku 5.5 are user-selectable (`ClaudeModel`).
+- Default model is `claude-sonnet-5-5`; Opus 5.5 and Haiku 5.5 are user-selectable (`ClaudeModel`).
   Use model IDs exactly as written, with no date suffixes.
 - Don't send `thinking: disabled`, `budget_tokens`, `temperature`/`top_p`/`top_k`, assistant
   prefill, or forced `tool_choice`; current models reject them. Control cost with

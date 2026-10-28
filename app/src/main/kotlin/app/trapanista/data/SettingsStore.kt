@@ -50,7 +50,7 @@ class SettingsStore(context: Context) {
 
     var model: ClaudeModel
         get() = prefs.getString(KEY_MODEL, null)?.let { runCatching { ClaudeModel.valueOf(it) }.getOrNull() }
-            ?: ClaudeModel.OPUS
+            ?: ClaudeModel.SONNET
         set(value) = prefs.edit().putString(KEY_MODEL, value.name).apply()
 
     var geminiModel: GeminiModel
