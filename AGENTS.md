@@ -78,6 +78,11 @@ builds, and voice mode shows a setup message.
 - `session.startAudioConversation(liveAudioConversationConfig { ... })` owns the mic and speaker.
   Always call `stopAudioConversation()` and `close()` when leaving. Check `RECORD_AUDIO` at
   runtime before starting.
+- The SDK plays Gemini as media audio, which phones leave out of echo cancellation. `VoicePartner`
+  overrides it to voice-communication audio via `initializationHandler` and switches the phone to
+  call mode for the session; keep both, or Gemini hears itself and answers its own lines.
+- A server-side handshake rejection surfaces only as "Channel was closed by the server"; see the
+  README's Firebase setup and troubleshooting.
 - Transcript callbacks arrive as fragments on background threads; `VoiceViewModel` merges
   consecutive fragments from the same speaker. Update state with `MutableStateFlow.update`.
 - During the scene Gemini doesn't correct the learner; feedback comes from the Claude review.

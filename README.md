@@ -29,24 +29,82 @@ reviews the transcript: what went well, corrections for each line you said, and 
 ## Firebase setup (for voice mode)
 
 The app builds and text mode works without this; voice mode shows a setup message until it's done.
+Only `app/google-services.json` and the App Check debug tokens are per-developer; everything else
+is in the code.
 
-1. In the [Firebase console](https://console.firebase.google.com), create a project and add an
-   Android app with package name `app.trapanista`.
-2. Download `google-services.json` into `app/`. It is git-ignored.
-3. Under **AI Logic**, run the guided setup with the **Gemini Developer API**.
-4. App Check is enforced for AI Logic. For debug builds, run the app once, copy the debug token
-   from Logcat (tag `DebugAppCheckProvider`), and add it under **App Check > Apps > Manage debug
-   tokens**. Release builds use Play Integrity; register the app's SHA-256 fingerprint before
-   publishing.
+1. **Create the project.** In the [Firebase console](https://console.firebase.google.com), create a
+   project. Google Analytics isn't needed.
+2. **Register the Android app.** Add an Android app with package name `app.trapanista` (no SHA-1
+   needed). Download `google-services.json` into `app/`; it is git-ignored and must not be
+   committed. Skip the console's Gradle and SDK steps: the build applies the google-services
+   plugin automatically when the file exists.
+3. **Turn on AI Logic.** Open **AI Logic > Get started** and choose the **Gemini Developer API**
+   (not Vertex AI); the app uses `GenerativeBackend.googleAI()`. This enables the Firebase AI Logic
+   API and the Gemini API. After enabling, allow a few minutes: until the change has propagated,
+   some connections still fail.
+4. **Set up App Check.** Open **App Check > Get started**; this enables the App Check API.
+   - Debug builds use the debug provider. Build and install, start a voice conversation once, then
+     read the token:
+     ```sh
+     adb logcat -d | grep "App Check debug token"
+     ```
+     Add it under **App Check > Apps > ⋮ on app.trapanista > Manage debug tokens**. Each install
+     (emulator, phone) has its own token, and it changes if the app is uninstalled or its data is
+     cleared. Treat tokens as secrets and delete them when no longer needed.
+   - Release builds use Play Integrity: register `app.trapanista` with the **Play Integrity**
+     provider and add the release key's SHA-256 fingerprint before publishing.
+5. **Enforce App Check.** Under **App Check > APIs**, enforce it for **Firebase AI Logic** (required
+   by Firebase from November 2, 2026).
+6. **Rebuild** (`./gradlew installDebug`) and try **Speak** on a scenario.
 
-## Building
+### Troubleshooting voice
+
+- **"Channel was closed by the server"**: the server rejected the Live API handshake. The SDK
+  doesn't show why; the usual causes are AI Logic not enabled or not yet propagated (step 3), the
+  App Check API not enabled (step 4), or an unregistered debug token. App Check problems show up in
+  Logcat as `Error obtaining AppCheck token` with the reason.
+- **Voice shows the setup message**: `app/google-services.json` is missing or the app wasn't
+  rebuilt after adding it.
+- **Gemini answers itself**: its voice is reaching the mic. The app plays Gemini as call audio so
+  the phone's echo cancellation removes it; on the emulator, use headphones.
+
+## Building and running
 
 Requires JDK 17 and the Android SDK (platform 35).
 
 ```sh
-./gradlew assembleDebug
-adb install app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleDebug assembleRelease   # both must compile
+./gradlew installDebug                    # install on the connected device or emulator
 ```
+
+With several devices attached, pick one with `ANDROID_SERIAL=<serial> ./gradlew installDebug`
+(serials from `adb devices`).
+
+### Phone over USB (Linux)
+
+1. On the phone, enable **Developer options** (tap **Build number** seven times) and turn on
+   **USB debugging**.
+2. If `adb devices` shows `no permissions`, add a udev rule for the phone's USB vendor ID (from
+   `lsusb`; `18d1` is Google's, which many phones use), then replug the phone:
+   ```sh
+   echo 'SUBSYSTEM=="usb", ATTR{idVendor}=="18d1", MODE="0660", GROUP="plugdev", TAG+="uaccess"' \
+     | sudo tee /etc/udev/rules.d/51-android.rules
+   sudo udevadm control --reload-rules && sudo udevadm trigger
+   ```
+3. If it shows `unauthorized`, accept **Allow USB debugging?** on the phone.
+
+### Emulator
+
+Create an AVD with a Google Play system image (API 35), then start it with host audio so voice mode
+can use your microphone:
+
+```sh
+emulator -avd <name> -allow-host-audio
+```
+
+If the mic isn't heard, turn on **⋯ > Microphone > Virtual microphone uses host audio input**. If
+the emulator crashes with `BadWindow` on Linux, `QT_QPA_PLATFORM` is probably set to `offscreen`
+in your environment; start it with `QT_QPA_PLATFORM=xcb emulator ...`.
 
 ## Code layout
 
