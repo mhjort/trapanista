@@ -29,6 +29,7 @@ private const val VOICE = "voice:"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        setTheme(R.style.Theme_Trapanista)
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         val settings = SettingsStore(applicationContext)
