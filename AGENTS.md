@@ -58,6 +58,10 @@ Always make sure both build types compile before finishing a change. `app/google
 is git-ignored and optional: without it the google-services plugin isn't applied, the app still
 builds, and voice mode shows a setup message.
 
+## Git workflow
+
+We work directly on `main`: commit and push there, without feature branches or pull requests.
+
 ## Claude API conventions
 
 - Default model is `claude-sonnet-5-5`; Opus 5.5 and Haiku 5.5 are user-selectable (`ClaudeModel`).
