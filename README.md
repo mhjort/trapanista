@@ -15,9 +15,14 @@ reviews the transcript: what went well, corrections for each line you said, and 
 - suggests 2-3 things you could say next (tap one to fill the input)
 - marks the scene complete when you reach the goal
 
+**Scan an exercise** (Claude): photograph a pair exercise from your book, or pick a photo from the
+gallery. Claude reads it, you choose the exercise and which student you are, and the app plays the
+other one using the book's details. The new situation is saved under **From your book** on the home
+screen and works in both Speak and Type. The photo goes to Anthropic with your key and isn't stored.
+
 ## Keys and accounts
 
-- **Claude (bring your own key):** text chat and voice feedback call the Anthropic API directly
+- **Claude (bring your own key):** text chat, voice feedback and exercise scanning call the Anthropic API directly
   with the user's own key. Get one at [console.anthropic.com](https://console.anthropic.com) and
   paste it in **Settings**. It is encrypted with an Android Keystore key and only sent to Anthropic.
   Settings also has the level (A1-B2) and the Claude model (Sonnet 5.5 by default; Opus 5.5 gives the
@@ -110,10 +115,12 @@ in your environment; start it with `QT_QPA_PLATFORM=xcb emulator ...`.
 
 All code is Kotlin, under `app/src/main/kotlin/app/trapanista/`:
 
-- `data/Scenario.kt`: the role-play situations; add new ones here
+- `data/Scenario.kt`: the built-in role-play situations; add new ones here
+- `data/ScenarioStore.kt`: situations scanned from your book
 - `data/SettingsStore.kt`: API key (encrypted), level, Claude and Gemini models
 - `llm/VoicePartner.kt`: Gemini Live session (prompt, transcripts, `end_scene` function)
 - `llm/ReviewClient.kt`: Claude review of a voice transcript
+- `llm/ExerciseScanner.kt`, `llm/ExerciseImage.kt`: reading a photographed exercise with Claude
 - `llm/TutorClient.kt`: Claude text tutor; `llm/Claude.kt` holds the shared API call
 - `ui/`: Jetpack Compose screens and view models
 - `TrapanistaApp.kt`, `src/{debug,release}/.../AppCheck.kt`: Firebase and App Check setup

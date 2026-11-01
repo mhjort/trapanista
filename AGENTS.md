@@ -21,7 +21,7 @@ through the app's Firebase project (no user key; protected by App Check). There 
   Don't add Java sources or Groovy `.gradle` files.
 - Jetpack Compose + Material 3 for UI; no XML layouts, no Fragments.
 - Single activity (`MainActivity`) with screen state in a `rememberSaveable` string
-  (`home`, `settings`, `chat:<id>`, `voice:<id>`); no Navigation library yet.
+  (`home`, `settings`, `scan`, `chat:<id>`, `voice:<id>`); no Navigation library yet.
 - Coroutines + `StateFlow` in view models.
 - Dependency versions live in `gradle/libs.versions.toml`.
 - Claude access via the official Anthropic Java SDK (`com.anthropic:anthropic-java`), beta messages endpoint.
@@ -34,13 +34,16 @@ through the app's Firebase project (no user key; protected by App Check). There 
 app/src/main/kotlin/app/trapanista/
   MainActivity.kt        screen switching
   TrapanistaApp.kt       Firebase init; firebaseReady is false without google-services.json
-  data/Scenario.kt       the role-play situations (add new scenarios here)
+  data/Scenario.kt       the built-in role-play situations (add new scenarios here)
+  data/ScenarioStore.kt  situations scanned from the learner's book, saved in SharedPreferences
   data/SettingsStore.kt  encrypted API key (Android Keystore AES-GCM), level, Claude/Gemini models
   llm/Claude.kt          shared Claude call: structured JSON output, fallbacks, error mapping
   llm/TutorClient.kt     text-mode tutor (system prompt, turn schema, append-only history)
   llm/ReviewClient.kt    review of a voice transcript
+  llm/ExerciseImage.kt   loads a photo: upright, scaled to Claude's image limits, base64 JPEG
+  llm/ExerciseScanner.kt reads pair exercises from a photo and builds scenarios from them
   llm/VoicePartner.kt    Gemini Live session, transcripts, end_scene function call
-  ui/                    Compose screens, theme, ChatViewModel, VoiceViewModel
+  ui/                    Compose screens, theme, ChatViewModel, VoiceViewModel, ScanViewModel
 app/src/{debug,release}/kotlin/app/trapanista/AppCheck.kt   App Check provider per build type
 ```
 
@@ -87,6 +90,17 @@ builds, and voice mode shows a setup message.
   consecutive fragments from the same speaker. Update state with `MutableStateFlow.update`.
 - During the scene Gemini doesn't correct the learner; feedback comes from the Claude review.
   Gemini signals the end of the scene by calling the `end_scene` function.
+
+## Scanned exercises
+
+- `ExerciseScanner` sends one photo to Claude, and the learner picks an exercise and role. The
+  result is a normal `Scenario`; `bookDetails` carries the book's facts into `promptBlock`, which
+  text mode, voice mode and the review all share.
+- Photos are never stored. The camera writes to a fixed file in `cacheDir/exercises/`, which is
+  deleted once read. Don't declare the `CAMERA` permission: `TakePicture` works without it, but
+  would require a runtime grant if it were declared.
+- The learner sees only their own role's `brief`. Keep the other role's card out of the UI, since
+  info-gap exercises depend on it.
 
 ## Security
 

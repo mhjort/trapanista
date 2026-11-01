@@ -8,15 +8,19 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DocumentScanner
 import androidx.compose.material.icons.filled.Keyboard
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -27,6 +31,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -40,10 +48,28 @@ import app.trapanista.data.scenarios
 @Composable
 fun HomeScreen(
     hasApiKey: Boolean,
+    saved: List<Scenario>,
     onSpeak: (Scenario) -> Unit,
     onType: (Scenario) -> Unit,
+    onScan: () -> Unit,
+    onDelete: (Scenario) -> Unit,
     onOpenSettings: () -> Unit,
 ) {
+    var pendingDelete by remember { mutableStateOf<Scenario?>(null) }
+    pendingDelete?.let { scenario ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text("Delete \"${scenario.titleIt}\"?") },
+            text = { Text("You can scan the exercise again later.") },
+            confirmButton = {
+                TextButton(onClick = { onDelete(scenario); pendingDelete = null }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }) { Text("Cancel") }
+            },
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -83,6 +109,39 @@ fun HomeScreen(
                 }
             }
             item {
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .clickable(onClick = onScan),
+                ) {
+                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.DocumentScanner, null, Modifier.size(32.dp))
+                        Spacer(Modifier.width(16.dp))
+                        Column {
+                            Text("Scan an exercise", style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "Turn a pair exercise from your book into a conversation.",
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                        }
+                    }
+                }
+            }
+            if (saved.isNotEmpty()) {
+                item {
+                    Text(
+                        "From your book",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                }
+                items(saved, key = { it.id }) { scenario ->
+                    ScenarioCard(scenario, onSpeak, onType, onDelete = { pendingDelete = scenario })
+                }
+                item { Spacer(Modifier.height(16.dp)) }
+            }
+            item {
                 Text(
                     "Choose a situation",
                     style = MaterialTheme.typography.titleMedium,
@@ -90,33 +149,47 @@ fun HomeScreen(
                 )
             }
             items(scenarios, key = { it.id }) { scenario ->
-                Card(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp)
-                        .clickable { onSpeak(scenario) },
-                ) {
-                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(scenario.emoji, fontSize = 32.sp)
-                        Spacer(Modifier.width(16.dp))
-                        Column {
-                            Text(scenario.titleIt, style = MaterialTheme.typography.titleMedium)
-                            Text(scenario.title, style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.primary)
-                            Text(scenario.description, style = MaterialTheme.typography.bodySmall)
-                            Row {
-                                TextButton(onClick = { onSpeak(scenario) }) {
-                                    Icon(Icons.Default.Mic, null)
-                                    Spacer(Modifier.width(4.dp))
-                                    Text("Speak")
-                                }
-                                TextButton(onClick = { onType(scenario) }) {
-                                    Icon(Icons.Default.Keyboard, null)
-                                    Spacer(Modifier.width(4.dp))
-                                    Text("Type")
-                                }
-                            }
-                        }
+                ScenarioCard(scenario, onSpeak, onType)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ScenarioCard(
+    scenario: Scenario,
+    onSpeak: (Scenario) -> Unit,
+    onType: (Scenario) -> Unit,
+    onDelete: (() -> Unit)? = null,
+) {
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .clickable { onSpeak(scenario) },
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(scenario.emoji, fontSize = 32.sp)
+            Spacer(Modifier.width(16.dp))
+            Column(Modifier.weight(1f)) {
+                Text(scenario.titleIt, style = MaterialTheme.typography.titleMedium)
+                Text(scenario.title, style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary)
+                Text(scenario.description, style = MaterialTheme.typography.bodySmall)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = { onSpeak(scenario) }) {
+                        Icon(Icons.Default.Mic, null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Speak")
+                    }
+                    TextButton(onClick = { onType(scenario) }) {
+                        Icon(Icons.Default.Keyboard, null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Type")
+                    }
+                    if (onDelete != null) {
+                        Spacer(Modifier.weight(1f))
+                        IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "Delete") }
                     }
                 }
             }

@@ -10,6 +10,8 @@ data class Scenario(
     val partnerRole: String,
     /** What the learner is trying to achieve, described for the model. */
     val learnerGoal: String,
+    /** Concrete facts from a scanned book exercise, described for the model. Empty for built-ins. */
+    val bookDetails: String = "",
 )
 
 val scenarios = listOf(

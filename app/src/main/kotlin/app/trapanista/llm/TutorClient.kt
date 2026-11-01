@@ -139,9 +139,17 @@ internal fun parsePhrases(arr: JSONArray): List<Suggestion> = (0 until arr.lengt
 }
 
 /** Scene description shared by the text tutor, the voice partner and the reviewer. */
-internal fun Scenario.promptBlock(level: Level) = """
-    Scene: $titleIt ($title).
-    The partner role: $partnerRole.
-    The learner's goal: $learnerGoal.
-    Learner level: ${level.label} (${level.description}) on the CEFR scale.
-""".trimIndent()
+internal fun Scenario.promptBlock(level: Level): String {
+    val scene = """
+        Scene: $titleIt ($title).
+        The partner role: $partnerRole.
+        The learner's goal: $learnerGoal.
+        Learner level: ${level.label} (${level.description}) on the CEFR scale.
+    """.trimIndent()
+    if (bookDetails.isBlank()) return scene
+    return scene + "\n\n" + """
+        This scene comes from a pair-work exercise in the learner's textbook. The partner follows the
+        exercise and uses the facts below instead of inventing others, and gives facts from their own
+        card only when the learner asks for them. The learner sees only their own card.
+    """.trimIndent() + "\n<exercise>\n$bookDetails\n</exercise>"
+}
