@@ -35,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,10 +57,7 @@ fun ChatScreen(scenario: Scenario, viewModel: ChatViewModel, onBack: () -> Unit)
     var input by rememberSaveable { mutableStateOf("") }
     val listState = rememberLazyListState()
 
-    LaunchedEffect(state.items.size, state.loading) {
-        val count = listState.layoutInfo.totalItemsCount
-        if (count > 0) listState.animateScrollToItem(count - 1)
-    }
+    AutoScrollToBottom(listState, state.items, state.loading, state.sceneComplete, state.error)
 
     Scaffold(
         topBar = {

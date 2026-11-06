@@ -37,7 +37,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,10 +74,11 @@ fun VoiceScreen(scenario: Scenario, viewModel: VoiceViewModel, onBack: () -> Uni
         }
     }
 
-    LaunchedEffect(state.transcript.size, state.phase) {
-        val count = listState.layoutInfo.totalItemsCount
-        if (count > 0) listState.animateScrollToItem(count - 1)
-    }
+    // Transcript fragments grow the last line in place, so follow its length too.
+    AutoScrollToBottom(
+        listState, state.transcript.size, state.transcript.lastOrNull()?.text?.length,
+        state.phase, state.sceneComplete, state.review, state.error,
+    )
 
     Scaffold(
         topBar = {
