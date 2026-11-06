@@ -2,6 +2,8 @@ package app.trapanista.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.trapanista.data.Mode
+import app.trapanista.data.ProgressStore
 import app.trapanista.data.Scenario
 import app.trapanista.data.SettingsStore
 import app.trapanista.llm.Correction
@@ -27,11 +29,13 @@ data class ChatUiState(
     val loading: Boolean = false,
     val error: String? = null,
     val sceneComplete: Boolean = false,
+    val stars: Int = 0,
 )
 
 class ChatViewModel(
     private val scenario: Scenario,
     private val settings: SettingsStore,
+    private val progress: ProgressStore,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ChatUiState())
@@ -75,6 +79,10 @@ class ChatViewModel(
             try {
                 val turn = withContext(Dispatchers.IO) { call(client) }
                 retry = null
+                // Record once, on the turn that completes the scene.
+                if (turn.sceneComplete && !_state.value.sceneComplete) {
+                    progress.record(scenario.id, Mode.TEXT, turn.stars)
+                }
                 _state.update { it.withTurn(turn) }
             } catch (e: ClaudeException) {
                 _state.update { it.copy(loading = false, error = e.message) }
@@ -96,6 +104,7 @@ class ChatViewModel(
             loading = false,
             error = null,
             sceneComplete = turn.sceneComplete,
+            stars = if (turn.sceneComplete) turn.stars else stars,
         )
     }
 

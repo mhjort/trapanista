@@ -119,6 +119,7 @@ fun ChatScreen(scenario: Scenario, viewModel: ChatViewModel, onBack: () -> Unit)
                         ) {
                             Column(Modifier.padding(16.dp)) {
                                 Text("Bravo! 🎉 Scene complete.", fontWeight = FontWeight.Bold)
+                                if (state.stars > 0) Stars(state.stars, Modifier.padding(top = 8.dp), size = 28.dp)
                                 TextButton(onClick = viewModel::restart) { Text("Practise again") }
                             }
                         }

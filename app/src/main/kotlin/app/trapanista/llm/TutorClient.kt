@@ -20,6 +20,8 @@ data class TutorTurn(
     val translation: String,
     val suggestions: List<Suggestion>,
     val sceneComplete: Boolean,
+    /** 1-5 for the whole conversation once [sceneComplete]; 0 before that. */
+    val stars: Int,
 )
 
 /**
@@ -86,19 +88,25 @@ class TutorClient(
                         "type" to "boolean",
                         "description" to "True once the learner has achieved the goal and the scene has naturally ended.",
                     ),
+                    "stars" to mapOf(
+                        "type" to "integer",
+                        "description" to "Only when scene_complete is true: 1-5 stars for the learner's whole conversation. 0 otherwise.",
+                    ),
                 )
             )
         )
 
         fun parseTurn(json: String): TutorTurn {
             val o = JSONObject(json)
+            val sceneComplete = o.getBoolean("scene_complete")
             return TutorTurn(
                 corrections = parseCorrections(o.getJSONArray("corrections")),
                 tip = o.getString("tip"),
                 reply = o.getString("reply"),
                 translation = o.getString("translation"),
                 suggestions = parsePhrases(o.getJSONArray("suggestions")),
-                sceneComplete = o.getBoolean("scene_complete"),
+                sceneComplete = sceneComplete,
+                stars = if (sceneComplete) o.getInt("stars").coerceIn(1, 5) else 0,
             )
         }
 
@@ -124,9 +132,16 @@ class TutorClient(
             - Be encouraging; the corrections are shown beside the learner's message, not spoken in the scene.
             - "suggestions" should be things the learner could actually say next, at their level,
               that move towards their goal.
+            - When you set scene_complete, score the whole conversation in "stars". $STAR_RUBRIC
         """.trimIndent()
     }
 }
+
+/** How Claude turns a finished conversation into 1-5 stars; shared by text mode and the voice review. */
+internal const val STAR_RUBRIC =
+    "Judge against the learner's level: 5 = goal reached in natural Italian with at most minor slips, " +
+        "4 = goal reached with a few mistakes, 3 = goal reached but with frequent mistakes or some English, " +
+        "2 = goal only partly reached or needed a lot of help, 1 = very little Italian or goal not reached."
 
 internal fun parseCorrections(arr: JSONArray): List<Correction> = (0 until arr.length()).map { i ->
     val c = arr.getJSONObject(i)

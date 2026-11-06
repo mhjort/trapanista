@@ -193,6 +193,7 @@ private fun ReviewCard(review: Review) {
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("Feedback", style = MaterialTheme.typography.titleMedium)
+            Stars(review.stars, size = 28.dp)
             Text(review.summary)
             review.wentWell.forEach { Text("✅ $it", style = MaterialTheme.typography.bodyMedium) }
 

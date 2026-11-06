@@ -21,7 +21,7 @@ through the app's Firebase project (no user key; protected by App Check). There 
   Don't add Java sources or Groovy `.gradle` files.
 - Jetpack Compose + Material 3 for UI; no XML layouts, no Fragments.
 - Single activity (`MainActivity`) with screen state in a `rememberSaveable` string
-  (`home`, `settings`, `scan`, `chat:<id>`, `voice:<id>`); no Navigation library yet.
+  (`home`, `settings`, `scan`, `exercises`, `chat:<id>`, `voice:<id>`); no Navigation library yet.
 - Coroutines + `StateFlow` in view models.
 - Dependency versions live in `gradle/libs.versions.toml`.
 - Claude access via the official Anthropic Java SDK (`com.anthropic:anthropic-java`), beta messages endpoint.
@@ -36,6 +36,7 @@ app/src/main/kotlin/app/trapanista/
   TrapanistaApp.kt       Firebase init; firebaseReady is false without google-services.json
   data/Scenario.kt       the built-in role-play situations (add new scenarios here)
   data/ScenarioStore.kt  situations scanned from the learner's book, saved in SharedPreferences
+  data/ProgressStore.kt  scored attempts (1-5 stars per finished run) and the recommended next exercise
   data/SettingsStore.kt  encrypted API key (Android Keystore AES-GCM), level, Claude/Gemini models
   llm/Claude.kt          shared Claude call: structured JSON output, fallbacks, error mapping
   llm/TutorClient.kt     text-mode tutor (system prompt, turn schema, append-only history)
@@ -74,6 +75,9 @@ We work directly on `main`: commit and push there, without feature branches or p
   (use the `Claude.obj` helper).
 - Text-mode history is **append-only**: replay assistant responses with `BetaMessage.toParam()`
   and never edit or drop earlier turns, or thinking-block validation fails.
+- Both the text tutor's final turn and the voice review return `stars` (1-5), graded with the shared
+  `STAR_RUBRIC`. Every finished run is saved in `ProgressStore`; home recommends the first exercise
+  never finished, else the one with the lowest best score below 5.
 - Server-side refusal fallbacks (`fallbacksDefault()` + beta `server-side-fallback-2026-07-01`) are
   sent for Opus and Sonnet only; Haiku doesn't support them.
 - API calls are blocking; run them on `Dispatchers.IO`.

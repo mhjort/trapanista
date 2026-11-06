@@ -6,6 +6,8 @@ import android.util.Log
 import androidx.annotation.RequiresPermission
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.trapanista.data.Mode
+import app.trapanista.data.ProgressStore
 import app.trapanista.data.Scenario
 import app.trapanista.data.SettingsStore
 import app.trapanista.llm.ClaudeException
@@ -37,6 +39,7 @@ data class VoiceUiState(
 class VoiceViewModel(
     private val scenario: Scenario,
     private val settings: SettingsStore,
+    private val progress: ProgressStore,
     private val firebaseReady: Boolean,
     private val audioManager: AudioManager,
 ) : ViewModel() {
@@ -105,6 +108,7 @@ class VoiceViewModel(
                 val review = withContext(Dispatchers.IO) {
                     ReviewClient(key, settings.model).use { it.review(scenario, settings.level, transcript) }
                 }
+                progress.record(scenario.id, Mode.VOICE, review.stars)
                 _state.update { it.copy(phase = VoicePhase.REVIEWED, review = review) }
             } catch (e: ClaudeException) {
                 _state.update { it.copy(phase = VoicePhase.REVIEWED, error = e.message) }

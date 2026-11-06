@@ -19,6 +19,8 @@ data class Review(
     val wentWell: List<String>,
     val lines: List<ReviewedLine>,
     val usefulPhrases: List<Suggestion>,
+    /** 1-5. */
+    val stars: Int,
 )
 
 /** Asks Claude to review the transcript of a finished voice conversation. */
@@ -57,6 +59,7 @@ class ReviewClient(apiKey: String, model: ClaudeModel) : AutoCloseable {
                 wentWell = o.getJSONArray("went_well").let { a -> (0 until a.length()).map(a::getString) },
                 lines = learnerLines.mapIndexed { i, line -> ReviewedLine(line.text, byIndex[i].orEmpty()) },
                 usefulPhrases = parsePhrases(o.getJSONArray("useful_phrases")),
+                stars = o.getInt("stars").coerceIn(1, 5),
             )
         } catch (e: Exception) {
             throw ClaudeException("Couldn't read the review.", e)
@@ -88,6 +91,10 @@ class ReviewClient(apiKey: String, model: ClaudeModel) : AutoCloseable {
                         "3-5 natural phrases for this situation the learner didn't use but would benefit from, at their level.",
                         Claude.PHRASE_SCHEMA,
                     ),
+                    "stars" to mapOf(
+                        "type" to "integer",
+                        "description" to "1-5 stars for the whole conversation.",
+                    ),
                 )
             )
         )
@@ -103,6 +110,8 @@ class ReviewClient(apiKey: String, model: ClaudeModel) : AutoCloseable {
             likely mis-transcription. Focus on grammar, word choice, agreement, verb forms and register
             (Lei vs tu). Don't correct things that are just a different valid phrasing. Only review the
             learner's lines. Be specific and encouraging, and pitch explanations at ${level.label}.
+
+            Score the conversation in "stars". $STAR_RUBRIC
         """.trimIndent()
     }
 }

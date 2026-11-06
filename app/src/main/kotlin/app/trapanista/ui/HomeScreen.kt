@@ -1,26 +1,21 @@
 package app.trapanista.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.DocumentScanner
-import androidx.compose.material.icons.filled.Keyboard
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,45 +26,28 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import app.trapanista.data.Scenario
 import app.trapanista.R
-import app.trapanista.data.scenarios
+import app.trapanista.data.Scenario
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     hasApiKey: Boolean,
-    saved: List<Scenario>,
+    /** Null once every exercise has 5 stars. */
+    recommended: Scenario?,
+    /** The recommended exercise's best score so far, if it has been done. */
+    recommendedBest: Int?,
     onSpeak: (Scenario) -> Unit,
     onType: (Scenario) -> Unit,
     onScan: () -> Unit,
-    onDelete: (Scenario) -> Unit,
+    onOpenExercises: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
-    var pendingDelete by remember { mutableStateOf<Scenario?>(null) }
-    pendingDelete?.let { scenario ->
-        AlertDialog(
-            onDismissRequest = { pendingDelete = null },
-            title = { Text("Delete \"${scenario.titleIt}\"?") },
-            text = { Text("You can scan the exercise again later.") },
-            confirmButton = {
-                TextButton(onClick = { onDelete(scenario); pendingDelete = null }) { Text("Delete") }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingDelete = null }) { Text("Cancel") }
-            },
-        )
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -85,6 +63,9 @@ fun HomeScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onOpenExercises) {
+                        Icon(Icons.AutoMirrored.Filled.List, "All exercises")
+                    }
                     IconButton(onClick = onOpenSettings) { Icon(Icons.Default.Settings, "Settings") }
                 },
             )
@@ -109,89 +90,64 @@ fun HomeScreen(
                 }
             }
             item {
-                Card(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp)
-                        .clickable(onClick = onScan),
-                ) {
-                    Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.DocumentScanner, null, Modifier.size(32.dp))
-                        Spacer(Modifier.width(16.dp))
-                        Column {
-                            Text("Scan an exercise", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "Recommended for you",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+            }
+            item {
+                if (recommended != null) {
+                    ScenarioCard(
+                        recommended,
+                        onSpeak,
+                        onType,
+                        best = recommendedBest,
+                        history = recommendedBest?.let { "best so far" },
+                    )
+                } else {
+                    Card(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+                        Column(Modifier.padding(16.dp)) {
+                            Text("Tutto fatto! 🎉", style = MaterialTheme.typography.titleMedium)
                             Text(
-                                "Turn a pair exercise from your book into a conversation.",
-                                style = MaterialTheme.typography.bodySmall,
+                                "Every exercise has 5 stars. Scan a new one from your book, or practise any exercise again.",
+                                style = MaterialTheme.typography.bodyMedium,
                             )
                         }
                     }
                 }
             }
-            if (saved.isNotEmpty()) {
-                item {
-                    Text(
-                        "From your book",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(bottom = 8.dp),
-                    )
-                }
-                items(saved, key = { it.id }) { scenario ->
-                    ScenarioCard(scenario, onSpeak, onType, onDelete = { pendingDelete = scenario })
-                }
-                item { Spacer(Modifier.height(16.dp)) }
-            }
             item {
-                Text(
-                    "Choose a situation",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(bottom = 8.dp),
+                NavCard(
+                    Icons.AutoMirrored.Filled.List,
+                    "All exercises & results",
+                    "See your past scores and try any exercise.",
+                    onOpenExercises,
+                    Modifier.padding(top = 16.dp),
                 )
             }
-            items(scenarios, key = { it.id }) { scenario ->
-                ScenarioCard(scenario, onSpeak, onType)
+            item {
+                NavCard(
+                    Icons.Default.DocumentScanner,
+                    "Scan an exercise",
+                    "Turn a pair exercise from your book into a conversation.",
+                    onScan,
+                    Modifier.padding(top = 12.dp),
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ScenarioCard(
-    scenario: Scenario,
-    onSpeak: (Scenario) -> Unit,
-    onType: (Scenario) -> Unit,
-    onDelete: (() -> Unit)? = null,
-) {
-    Card(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 6.dp)
-            .clickable { onSpeak(scenario) },
-    ) {
+private fun NavCard(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit, modifier: Modifier) {
+    Card(modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(scenario.emoji, fontSize = 32.sp)
+            Icon(icon, null, Modifier.size(32.dp))
             Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Text(scenario.titleIt, style = MaterialTheme.typography.titleMedium)
-                Text(scenario.title, style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary)
-                Text(scenario.description, style = MaterialTheme.typography.bodySmall)
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = { onSpeak(scenario) }) {
-                        Icon(Icons.Default.Mic, null)
-                        Spacer(Modifier.width(4.dp))
-                        Text("Speak")
-                    }
-                    TextButton(onClick = { onType(scenario) }) {
-                        Icon(Icons.Default.Keyboard, null)
-                        Spacer(Modifier.width(4.dp))
-                        Text("Type")
-                    }
-                    if (onDelete != null) {
-                        Spacer(Modifier.weight(1f))
-                        IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, "Delete") }
-                    }
-                }
+            Column {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
