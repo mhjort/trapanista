@@ -44,7 +44,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.trapanista.data.Scenario
@@ -233,15 +237,24 @@ internal fun CorrectionRow(c: Correction, alignEnd: Boolean) {
         Modifier.widthIn(max = 320.dp).padding(top = 4.dp, end = 8.dp),
         horizontalAlignment = if (alignEnd) Alignment.End else Alignment.Start,
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                c.original,
-                style = MaterialTheme.typography.bodySmall,
-                textDecoration = TextDecoration.LineThrough,
-                color = MaterialTheme.colorScheme.error,
-            )
-            Text("→ ${c.corrected}", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-        }
-        Text(c.note, style = MaterialTheme.typography.bodySmall, fontStyle = FontStyle.Italic)
+        // One wrapping text: side-by-side Texts squeeze the correction into a one-letter column.
+        val error = MaterialTheme.colorScheme.error
+        Text(
+            buildAnnotatedString {
+                withStyle(SpanStyle(color = error, textDecoration = TextDecoration.LineThrough)) {
+                    append(c.original)
+                }
+                append("  →  ")
+                withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(c.corrected) }
+            },
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = if (alignEnd) TextAlign.End else TextAlign.Start,
+        )
+        Text(
+            c.note,
+            style = MaterialTheme.typography.bodySmall,
+            fontStyle = FontStyle.Italic,
+            textAlign = if (alignEnd) TextAlign.End else TextAlign.Start,
+        )
     }
 }
